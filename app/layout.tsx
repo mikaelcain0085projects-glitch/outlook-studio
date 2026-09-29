@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "OUTLOOK STUDIO",
-  description: "OUTLOOK STUDIO Admin",
+  description: "Build and developed by Mikael",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

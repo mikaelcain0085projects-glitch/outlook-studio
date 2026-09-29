@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 import { addToCart } from "@/lib/cart";
@@ -76,7 +76,7 @@ const decodeCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%&*";
 
 function DecodeText() {
   const original = "STUDIO";
-  const [text, setText] = useState(original);
+  const [text, setText] = useState(original);  
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -128,6 +128,12 @@ function DecodeText() {
 }
 
 export default function Home() {
+  
+   const [showDeveloper, setShowDeveloper] = useState(false);
+  const developerSectionRef = useRef<HTMLDivElement>(null);
+  
+
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
 const [currentPage, setCurrentPage] = useState(1);
@@ -264,6 +270,25 @@ const changeProductCategory = (category: string) => {
   setSelectedCategory(category);
   setCurrentPage(1);
 };
+useEffect(() => {
+  if (!showDeveloper) return;
+
+  const timer = setTimeout(() => {
+    const section = developerSectionRef.current;
+
+    if (!section) return;
+
+    const top =
+      section.getBoundingClientRect().top + window.scrollY;
+
+    window.scrollTo({
+      top: top - window.innerHeight / 2 + section.offsetHeight / 2,
+      behavior: "smooth",
+    });
+  }, 100);
+
+  return () => clearTimeout(timer);
+}, [showDeveloper]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -357,7 +382,7 @@ const changeProductCategory = (category: string) => {
 
   <a
     href="#enquiry"
-    className="text-black/80 transition-opacity duration-300 hover:opacity-60"
+    className="text-black/50 transition-opacity duration-300 hover:opacity-60"
   >
     Make an Enquiry
   </a>
@@ -541,19 +566,19 @@ const changeProductCategory = (category: string) => {
         {/* Hero Content */}
         <section className="absolute inset-x-0 bottom-0 z-10 mx-auto flex max-w-6xl items-end justify-between px-6 pb-10 md:px-10 md:pb-12">
           <div className="max-w-xl">
-            <p className="mb-4 text-xs uppercase tracking-[0.35em] text-black/50">
+            <p className="mb-4 text-xs uppercase tracking-[0.35em] text-black/90">
               Contemporary Fashion
             </p>
 
-           <h1 className="text-5xl text-black/80 font-light tracking-tight sm:text-6xl md:text-9xl">
-  OUTLOOK <DecodeText />
-  <br />
+          <h1 className="text-5xl text-black/80 font-light tracking-tight sm:text-6xl md:text-9xl">
+  <span className="block md:inline">OUTLOOK </span>
+  <DecodeText />
+  <br className="md:hidden" />
   <span className="font-medium"></span>
 </h1>
 
             <p className="mt-5 max-w-md text-sm leading-6 text-black/50 md:text-base">
-              Discover carefully selected pieces designed to become part of
-              your everyday style.
+              
             </p>
 
            <a
@@ -567,6 +592,15 @@ const changeProductCategory = (category: string) => {
   </span>
 </a>
           </div>
+          <div className="mt-8 flex flex-col items-center gap-2">
+  <span className="text-[9px] uppercase tracking-[0.35em] text-black/80">
+    Scroll Down
+  </span>
+
+  <span className="animate-bounce text-sm text-black/40">
+    ↓
+  </span>
+</div>
 
           {/* Slide Counter */}
           <div className="hidden items-center gap-3 pb-2 sm:flex">
@@ -649,18 +683,18 @@ const changeProductCategory = (category: string) => {
       {/* PRODUCTS */}
 <section
   id="shop"
-  className="relative overflow-hidden bg-[linear-gradient(to_bottom,#8f877d_0%,#c9c1b7_15%,#f1ede7_50%,#c9c1b7_85%,#8f877d_100%)] px-5 py-24 text-black sm:px-8 md:px-12"
+ className="relative overflow-hidden bg-[#f1ede7] px-5 py-24 text-black sm:px-8 md:px-12"
 >
  
   <div className="relative mx-auto max-w-6xl">
 
     {/* Heading */}
     <div className="mb-10">
-      <p className="mb-4 text-xs uppercase tracking-[0.35em] text-[#55504a]">
+      <p className="mb-4 text-xl uppercase tracking-[0.35em] text-black/40">
   Collection
 </p>
 
-<h2 className="text-4xl font-light tracking-tight text-[#24211e] sm:text-5xl md:text-6xl">
+<h2 className="text-5xl font-light tracking-tight text-[#24211e] sm:text-5xl md:text-7xl">
   Products
 </h2>
 
@@ -783,13 +817,31 @@ const changeProductCategory = (category: string) => {
         ₹{product.price.toLocaleString("en-IN")}
       </span>
     </div>
+    
   ) : (
     <span className="text-sm text-black/60">
       ₹{product.price.toLocaleString("en-IN")}
     </span>
   )}
 </div>
-          </div>
+<div className="mt-2">
+  {(product.stock ?? 0) > 0 ? (
+    <span
+      className={`text-[9px] uppercase tracking-[0.16em] ${
+        (product.stock ?? 0) <= 3
+          ? "text-amber-700"
+          : "text-emerald-700/70"
+      }`}
+    >
+      {product.stock ?? 0}{" "}
+      {(product.stock ?? 0) === 1 ? "item" : "items"} in stock
+    </span>
+  ) : (
+    <span className="text-[9px] uppercase tracking-[0.16em] text-red-700/70">
+      Out of stock
+    </span>
+  )}
+</div>         </div>
         </article>
       ))}
     </div>
@@ -986,11 +1038,11 @@ const changeProductCategory = (category: string) => {
 {/* Brand Divider */}
 <section className="relative flex min-h-[20vh] items-center justify-center overflow-hidden bg-[#f1ede7] px-6 py-20 text-center">
   <div className="relative z-10 mx-auto max-w-3xl">
-    <p className="mb-6 text-[15px] uppercase tracking-[0.42em] text-[#171717]/40">
+    <p className="mb-6 text-[20px] uppercase tracking-[0.42em] text-[#171717]/40">
       OUTLOOK STUDIO
     </p>
 
-    <h2 className="text-4xl font-light leading-[0.95] tracking-[-0.04em] text-[#171717] sm:text-5xl md:text-6xl">
+    <h2 className="text-3xl font-light leading-[0.95] tracking-[-0.04em] text-[#171717] sm:text-5xl md:text-5xl">
       FOR LITTLE MOMENTS.
       <br />
       <span className="text-[#171717]/55">
@@ -1255,9 +1307,7 @@ const changeProductCategory = (category: string) => {
 
 
 {/* Footer */}
-<footer
-
- className="relative overflow-hidden bg-[#171717] px-6 py-16 text-[#f1ede7] sm:px-10 md:px-16 md:py-20">
+<footer className="relative overflow-hidden bg-[#171717] px-6 py-16 text-[#f1ede7] sm:px-10 md:px-16 md:py-20">
   <div className="mx-auto max-w-7xl">
 
     <div className="flex flex-col items-center text-center">
@@ -1304,7 +1354,49 @@ const changeProductCategory = (category: string) => {
     </div>
 
   </div>
+
+  {/* Easter Egg Button */}
+  <button
+    onClick={() => {
+  if (!showDeveloper) {
+    setShowDeveloper(true);
+
+    setTimeout(() => {
+      developerSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 750);
+  } else {
+    setShowDeveloper(false);
+  }
+}}
+    aria-label={showDeveloper ? "Close developer information" : "Show developer information"}
+   className="absolute bottom-5 right-5 flex h-8 w-8 items-center justify-center rounded-full border border-yellow-400/25 text-lg font-light text-yellow-400/75 shadow-[0_0_18px_rgba(250,204,21,0.08)] transition-all duration-500 hover:border-yellow-400/60 hover:text-yellow-300 hover:shadow-[0_0_24px_rgba(250,204,21,0.18)] sm:bottom-6 sm:right-7"
+  >
+    <span
+  className={`${
+    showDeveloper ? "rotate-45" : "rotate-0"
+  } transition-transform duration-500`}
+>
+  +
+</span>
+  </button>
 </footer>
+
+{/* Developer Easter Egg */}
+<div
+  ref={developerSectionRef}
+  className={`overflow-hidden bg-[#111111] transition-all duration-700 ease-in-out ${
+    showDeveloper ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
+  }`}
+>
+  <div className="flex min-h-20 items-center justify-center px-6 py-6 text-center">
+    <p className="text-[9px] uppercase tracking-[0.28em] text-[#f1ede7]/60 sm:text-[10px]">
+      Design,Build and developed by Mikael : 8837067518.
+    </p>
+  </div>
+</div>
 </main>
 );
 }
