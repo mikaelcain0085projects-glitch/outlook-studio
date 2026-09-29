@@ -63,10 +63,9 @@ export default async function AdminPage() {
     .eq("id", user.id)
     .single();
 
-  if (profileError || !profile?.is_admin) {
-    redirect("/");
+    if (profileError || !profile?.is_admin) {
+    redirect("/?admin=unauthorized");
   }
-
   const [
   { data: products, error: productsError },
   { data: categories, error: categoriesError },

@@ -151,6 +151,21 @@ const [enquiryMessage, setEnquiryMessage] = useState("");
 const [enquirySubmitting, setEnquirySubmitting] = useState(false);
 const [enquirySuccess, setEnquirySuccess] = useState(false);
 const [enquiryError, setEnquiryError] = useState("");
+const [showUnauthorized, setShowUnauthorized] = useState(false);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("admin") === "unauthorized") {
+    setShowUnauthorized(true);
+
+    window.history.replaceState(
+      {},
+      "",
+      window.location.pathname
+    );
+  }
+}, []);
 
 const [products, setProducts] = useState<Product[]>([]);
 type Category = {
@@ -338,6 +353,32 @@ useEffect(() => {
 
   return (
     <main className="w-full bg-black text-white">
+      {showUnauthorized && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-5 backdrop-blur-md">
+    <div className="w-full max-w-md rounded-[28px] border border-black/[0.06] bg-[#F1EDE7] p-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.18)]">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3D9DD] text-[#8A4D57]">
+        !
+      </div>
+
+      <h2 className="mt-5 text-2xl font-light tracking-[-0.04em]">
+        Admin access not authorized
+      </h2>
+
+      <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#171717]/50">
+        This Google account isn&apos;t authorized to access the OUTLOOK
+        STUDIO administration panel.
+      </p>
+
+      <button
+        type="button"
+        onClick={() => setShowUnauthorized(false)}
+        className="mt-7 rounded-full bg-[#171717] px-6 py-3 text-[9px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#292929]"
+      >
+        Return to Store
+      </button>
+    </div>
+  </div>
+)}
       {/* HERO */}
       <section className="relative h-screen w-full overflow-hidden">
         {/* Slideshow */}
