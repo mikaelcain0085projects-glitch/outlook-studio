@@ -24,3 +24,144 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================================
+   OUTLOOK STUDIO — DECODE EFFECT
+   2 seconds normal
+   1 second decoding
+   2 seconds normal
+   LOOP
+   ========================================================= */
+
+.decode-studio {
+  display: inline-block;
+  position: relative;
+  min-width: 7ch;
+}
+
+/* =========================================================
+   DECODE LAYERS
+   ========================================================= */
+
+.decode-studio::before {
+  content: "STU#7O";
+  position: absolute;
+  inset: 0;
+  color: inherit;
+  opacity: 0;
+  animation: decode-text 5s steps(1, end) infinite;
+}
+
+.decode-studio::after {
+  content: "STUDIO";
+  position: absolute;
+  inset: 0;
+  color: inherit;
+  opacity: 1;
+  animation: decode-mask 5s steps(1, end) infinite;
+}
+
+
+/* =========================================================
+   MAIN DECODE
+   ========================================================= */
+
+@keyframes decode-text {
+
+  /* NORMAL — first 2 seconds */
+  0%,
+  40% {
+    opacity: 0;
+  }
+
+  /* DECODE BEGINS */
+  41% {
+    opacity: 1;
+    content: "5T#D1O";
+  }
+
+  45% {
+    content: "ST7D!O";
+  }
+
+  50% {
+    content: "S#UD10";
+  }
+
+  55% {
+    content: "STU#1O";
+  }
+
+  60% {
+    content: "STUD!O";
+  }
+
+  65% {
+    content: "STUD1O";
+  }
+
+  70% {
+    content: "STUDIO";
+  }
+
+  /* BACK TO NORMAL */
+  71%,
+  100% {
+    opacity: 0;
+  }
+}
+
+
+/* =========================================================
+   ORIGINAL TEXT MASK
+   ========================================================= */
+
+@keyframes decode-mask {
+
+  /* NORMAL */
+  0%,
+  40% {
+    opacity: 1;
+    filter: none;
+  }
+
+  /* DECODE */
+  41% {
+    opacity: 0;
+    filter: blur(1px);
+  }
+
+  45% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  55% {
+    opacity: 0;
+  }
+
+  60% {
+    opacity: 0.2;
+  }
+
+  65% {
+    opacity: 0.5;
+  }
+
+  /* FINAL REVEAL */
+  70% {
+    opacity: 1;
+    filter: none;
+  }
+
+  71%,
+  100% {
+    opacity: 1;
+  }
+}
+html {
+  scroll-behavior: smooth;
+}
