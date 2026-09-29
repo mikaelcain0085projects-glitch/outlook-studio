@@ -68,23 +68,28 @@ export default async function AdminPage() {
   }
 
   const [
-    { data: products, error: productsError },
-    { data: categories, error: categoriesError },
-  ] = await Promise.all([
-    supabase
-      .from("products")
-      .select(
-        "id, name, price, sale_price, stock, is_active, category_id, images"
-      )
-      .order("name", { ascending: true }),
+  { data: products, error: productsError },
+  { data: categories, error: categoriesError },
+  { count: enquiryCount, error: enquiriesError },
+] = await Promise.all([
+  supabase
+    .from("products")
+    .select(
+      "id, name, price, sale_price, stock, is_active, category_id, images"
+    )
+    .order("name", { ascending: true }),
 
-    supabase
-      .from("categories")
-      .select("id, name, slug")
-      .order("name", { ascending: true }),
-  ]);
+  supabase
+    .from("categories")
+    .select("id, name, slug")
+    .order("name", { ascending: true }),
 
-  if (productsError || categoriesError) {
+  supabase
+    .from("customer_enquiries")
+    .select("id", { count: "exact", head: true }),
+]);
+
+ if (productsError || categoriesError || enquiriesError) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F1EDE7] px-6 py-12 text-[#171717]">
         <div className="w-full max-w-md rounded-[28px] border border-black/[0.06] bg-white/80 p-8 text-center shadow-[0_24px_70px_rgba(40,35,30,0.08)] backdrop-blur-xl">
@@ -115,6 +120,7 @@ export default async function AdminPage() {
   const categoryList = (categories ?? []) as Category[];
 
   const totalProducts = productList.length;
+  const totalEnquiries = enquiryCount ?? 0;
 
   const activeProducts = productList.filter(
     (product) => product.is_active !== false
@@ -266,6 +272,14 @@ export default async function AdminPage() {
               description="View customer orders and manage their delivery status."
               icon="↗"
             />
+            <AdminActionCard
+  href="/admin/enquiries"
+  title="Customer enquiries"
+  description={`${totalEnquiries} ${
+    totalEnquiries === 1 ? "customer enquiry" : "customer enquiries"
+  } waiting to be reviewed.`}
+  icon="✦"
+/>
           </div>
         </section>
 

@@ -138,6 +138,13 @@ const [addingToCart, setAddingToCart] = useState(false);
 const [cartAdded, setCartAdded] = useState(false);
 const router = useRouter();
 const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const [enquiryOpen, setEnquiryOpen] = useState(false);
+const [enquiryName, setEnquiryName] = useState("");
+const [enquiryPhone, setEnquiryPhone] = useState("");
+const [enquiryMessage, setEnquiryMessage] = useState("");
+const [enquirySubmitting, setEnquirySubmitting] = useState(false);
+const [enquirySuccess, setEnquirySuccess] = useState(false);
+const [enquiryError, setEnquiryError] = useState("");
 
 const [products, setProducts] = useState<Product[]>([]);
 type Category = {
@@ -265,6 +272,44 @@ const changeProductCategory = (category: string) => {
 
     return () => clearInterval(timer);
   }, []);
+  const handleEnquirySubmit = async () => {
+  if (!enquiryName.trim() || !enquiryPhone.trim() || !enquiryMessage.trim()) {
+    setEnquiryError("Please fill in all fields.");
+    return;
+  }
+
+  setEnquirySubmitting(true);
+  setEnquiryError("");
+  setEnquirySuccess(false);
+
+  try {
+    const supabase = createClient();
+
+    const { error } = await supabase
+      .from("customer_enquiries")
+      .insert({
+        name: enquiryName.trim(),
+        phone: enquiryPhone.trim(),
+        message: enquiryMessage.trim(),
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    setEnquirySuccess(true);
+    setEnquiryName("");
+    setEnquiryPhone("");
+    setEnquiryMessage("");
+  } catch (error) {
+    console.error("Enquiry submission error:", error);
+    setEnquiryError(
+      "We couldn't send your enquiry. Please try again."
+    );
+  } finally {
+    setEnquirySubmitting(false);
+  }
+};
 
   return (
     <main className="w-full bg-black text-white">
@@ -301,30 +346,22 @@ const changeProductCategory = (category: string) => {
     OUTLOOK <span className="text-[#171717]/55">STUDIO</span>
   </a>
 
-  {/* Desktop navigation */}
-  <div className="hidden items-center gap-8 text-sm md:flex">
-    <a
-      href="#shop"
-      className="text-black/80 transition-opacity duration-300 hover:opacity-60"
-    >
-      Shop
-    </a>
+ {/* Desktop navigation */}
+<div className="hidden items-center gap-8 text-sm md:flex">
+  <a
+    href="#shop"
+    className="text-black/80 transition-opacity duration-300 hover:opacity-60"
+  >
+    Shop
+  </a>
 
-    <a
-      href="/collections"
-      className="text-black/80 transition hover:text-white"
-    >
-      Collections
-    </a>
-
-    <a
-      href="/about"
-      className="text-black/80 transition hover:text-white"
-    >
-      About
-    </a>
-  </div>
-
+  <a
+    href="#enquiry"
+    className="text-black/80 transition-opacity duration-300 hover:opacity-60"
+  >
+    Make an Enquiry
+  </a>
+</div>
   {/* Desktop actions */}
   <div className="hidden items-center gap-2 md:flex">
     <a
@@ -428,30 +465,18 @@ const changeProductCategory = (category: string) => {
         </a>
 
         <a
-          href="/collections"
-          onClick={() => setMobileMenuOpen(false)}
-          className="group flex items-center justify-between rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-white/60"
-        >
-          <span className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#171717]/75 transition-all duration-300 group-hover:tracking-[0.3em] group-hover:text-[#171717]">
-            Collections
-          </span>
-          <span className="text-sm text-[#171717]/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#171717]/70">
-            →
-          </span>
-        </a>
+  href="#enquiry"
+  onClick={() => setMobileMenuOpen(false)}
+  className="group flex items-center justify-between rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-white/60"
+>
+  <span className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#171717]/75 transition-all duration-300 group-hover:tracking-[0.3em] group-hover:text-[#171717]">
+    Make an Enquiry
+  </span>
 
-        <a
-          href="/about"
-          onClick={() => setMobileMenuOpen(false)}
-          className="group flex items-center justify-between rounded-2xl px-5 py-4 transition-all duration-300 hover:bg-white/60"
-        >
-          <span className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#171717]/75 transition-all duration-300 group-hover:tracking-[0.3em] group-hover:text-[#171717]">
-            About
-          </span>
-          <span className="text-sm text-[#171717]/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#171717]/70">
-            →
-          </span>
-        </a>
+  <span className="text-sm text-[#171717]/30 transition-all duration-300 group-hover:translate-x-1 group-hover:text-[#171717]/70">
+    →
+  </span>
+</a>
 
         <a
           href="/track-order"
@@ -572,8 +597,8 @@ const changeProductCategory = (category: string) => {
             Explore
           </p>
 
-          <h2 className="text-4xl font-light tracking-tight sm:text-5xl md:text-6xl">
-            Shop by category
+          <h2 className="text-5xl font-light tracking-tight sm:text-5xl md:text-6xl">
+            Shop by Category
           </h2>
 
           <p className="mt-5 max-w-lg text-sm leading-6 text-white/50 md:text-base">
@@ -961,7 +986,7 @@ const changeProductCategory = (category: string) => {
 {/* Brand Divider */}
 <section className="relative flex min-h-[20vh] items-center justify-center overflow-hidden bg-[#f1ede7] px-6 py-20 text-center">
   <div className="relative z-10 mx-auto max-w-3xl">
-    <p className="mb-6 text-[9px] uppercase tracking-[0.42em] text-[#171717]/40">
+    <p className="mb-6 text-[15px] uppercase tracking-[0.42em] text-[#171717]/40">
       OUTLOOK STUDIO
     </p>
 
@@ -1005,7 +1030,7 @@ const changeProductCategory = (category: string) => {
           WHEREVER IT GOES.
         </h2>
 
-        <p className="mt-7 max-w-md text-sm leading-6 text-orange-800 drop-shadow-[0_2px_10px_rgba(0,0,0,0.18)] sm:text-base">
+        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/55 drop-shadow-[0_2px_10px_rgba(0,0,0,0.18)] sm:text-base">
           Sign in with Google to view your orders and follow every update from
           confirmation to delivery.
         </p>
@@ -1023,12 +1048,216 @@ const changeProductCategory = (category: string) => {
   →
 </span>
         </button>
+        </div>
+      </div>
+    </div>
+
+</section>
+{/* TRACK ORDER → ENQUIRY BRAND BREAK */}
+<section className="flex h-24 items-center justify-center bg-[#171717] px-6 sm:h-28">
+  <div className="text-center">
+    <p className="text-[15px] uppercase tracking-[0.42em] text-[#f1ede7]/45">
+      OUTLOOK STUDIO
+    </p>
+
+    <p className="mt-2 text-[10px] font-light uppercase tracking-[0.28em] text-[#f1ede7]/75 sm:text-xs">
+      MADE FOR LITTLE MOMENTS.
+    </p>
+  </div>
+</section>
+
+{/* ENQUIRY */}
+<section
+  id="enquiry"
+  className="relative min-h-screen overflow-hidden bg-[#f1ede7]"
+>
+  {/* Background image */}
+  <img
+    src="/media/enquiry/enquiry.png"
+    alt="OUTLOOK STUDIO customer enquiry"
+    className="absolute inset-0 h-full w-full object-cover object-center"
+  />
+
+  {/* Soft editorial overlay */}
+  <div className="absolute inset-0 bg-[#f1ede7]/[0.10]" />
+
+  <div className="relative z-10 flex min-h-screen items-center px-6 py-24 sm:px-10 md:px-16 lg:px-24">
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="max-w-xl">
+        <p className="mb-5 text-[10px] uppercase tracking-[0.38em] text-[#171717]/50">
+          Customer Enquiry
+        </p>
+
+        <h2 className="max-w-2xl text-5xl font-light leading-[0.94] tracking-[-0.04em] text-[#171717] sm:text-6xl md:text-7xl lg:text-8xl">
+          WE&apos;RE HERE
+          <br />
+          TO HELP.
+        </h2>
+
+        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/55 sm:text-base">
+          Have a question about a piece, your order, sizing, or anything
+          else? Leave us a message and our team will get back to you.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => setEnquiryOpen(true)}
+          className="group mt-8 flex min-h-14 items-center gap-4 rounded-full border border-white/10 bg-[#171717]/85 px-6 py-3 text-xs font-medium uppercase tracking-[0.18em] text-[#f7f3ed] shadow-[0_12px_40px_rgba(0,0,0,0.18)] backdrop-blur-2xl transition-all duration-500 hover:border-[#16A34A]/45 hover:bg-[#16A34A] hover:text-white hover:shadow-[0_0_32px_rgba(22,163,74,0.20),0_14px_55px_rgba(0,0,0,0.20)]"
+        >
+          <span>Make Enquiry</span>
+
+          <span className="text-lg text-white/70 transition-all duration-500 group-hover:translate-x-1 group-hover:text-white">
+            →
+          </span>
+        </button>
       </div>
     </div>
   </div>
 </section>
+
+{/* ENQUIRY MODAL */}
+{enquiryOpen && (
+  <div
+    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-md"
+    onClick={() => setEnquiryOpen(false)}
+  >
+    <div
+      className="relative w-full max-w-lg overflow-hidden rounded-[28px] border border-black/[0.08] bg-[#f1ede7] text-[#171717] shadow-[0_30px_100px_rgba(0,0,0,0.30)]"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {/* Close */}
+      <button
+        type="button"
+        onClick={() => setEnquiryOpen(false)}
+        className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] text-lg text-[#171717]/45 transition-all duration-300 hover:bg-[#171717] hover:text-white"
+        aria-label="Close enquiry form"
+      >
+        ×
+      </button>
+
+      <div className="p-6 sm:p-8 md:p-10">
+        <p className="text-[9px] font-medium uppercase tracking-[0.28em] text-[#171717]/40">
+          OUTLOOK STUDIO
+        </p>
+
+        <h3 className="mt-3 pr-10 text-3xl font-light tracking-[-0.03em] text-[#171717] sm:text-4xl">
+          Make an enquiry.
+        </h3>
+
+        <p className="mt-3 max-w-md text-sm leading-6 text-[#171717]/50">
+          Tell us what you&apos;d like to know and we&apos;ll be happy to help.
+        </p>
+
+        <div className="mt-8 space-y-5">
+          {/* Name */}
+          <div>
+            <label
+              htmlFor="enquiry-name"
+              className="mb-2 block text-[9px] font-medium uppercase tracking-[0.18em] text-[#171717]/50"
+            >
+              Name
+            </label>
+
+            <input
+              id="enquiry-name"
+              type="text"
+              placeholder="Your name"
+              value={enquiryName}
+              onChange={(event) => setEnquiryName(event.target.value)}
+              className="w-full rounded-2xl border border-black/[0.08] bg-[#faf9f7] px-4 py-3.5 text-sm text-[#171717] outline-none transition-all duration-300 placeholder:text-[#171717]/25 focus:border-[#171717]/25 focus:bg-white"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label
+              htmlFor="enquiry-phone"
+              className="mb-2 block text-[9px] font-medium uppercase tracking-[0.18em] text-[#171717]/50"
+            >
+              Phone number
+            </label>
+
+            <input
+              id="enquiry-phone"
+              type="tel"
+              placeholder="Your phone number"
+              value={enquiryPhone}
+              onChange={(event) => setEnquiryPhone(event.target.value)}
+              className="w-full rounded-2xl border border-black/[0.08] bg-[#faf9f7] px-4 py-3.5 text-sm text-[#171717] outline-none transition-all duration-300 placeholder:text-[#171717]/25 focus:border-[#171717]/25 focus:bg-white"
+            />
+          </div>
+
+          {/* Enquiry */}
+          <div>
+            <label
+              htmlFor="enquiry-message"
+              className="mb-2 block text-[9px] font-medium uppercase tracking-[0.18em] text-[#171717]/50"
+            >
+              Your enquiry
+            </label>
+
+            <textarea
+              id="enquiry-message"
+              rows={5}
+              placeholder="How can we help?"
+              value={enquiryMessage}
+              onChange={(event) => setEnquiryMessage(event.target.value)}
+              className="w-full resize-none rounded-2xl border border-black/[0.08] bg-[#faf9f7] px-4 py-3.5 text-sm leading-6 text-[#171717] outline-none transition-all duration-300 placeholder:text-[#171717]/25 focus:border-[#171717]/25 focus:bg-white"
+            />
+          </div>
+
+          {/* Status messages */}
+          {enquiryError && (
+            <p className="rounded-2xl border border-red-900/10 bg-red-50 px-4 py-3 text-xs leading-5 text-red-700">
+              {enquiryError}
+            </p>
+          )}
+
+          {enquirySuccess && (
+            <div className="rounded-2xl border border-green-900/10 bg-green-50 px-4 py-4">
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-green-700">
+                Enquiry received
+              </p>
+
+              <p className="mt-1 text-sm leading-5 text-green-800/75">
+                Thank you. Our team will get back to you soon.
+              </p>
+            </div>
+          )}
+
+          {/* Submit */}
+          <button
+            type="button"
+            onClick={handleEnquirySubmit}
+            disabled={enquirySubmitting}
+            className="group flex w-full items-center justify-center gap-3 rounded-full bg-[#171717] px-6 py-4 text-[10px] font-medium uppercase tracking-[0.18em] text-white shadow-[0_10px_30px_rgba(23,23,23,0.15)] transition-all duration-500 hover:-translate-y-0.5 hover:bg-[#16A34A] hover:shadow-[0_12px_32px_rgba(22,163,74,0.20)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-[#171717]"
+          >
+            {enquirySubmitting ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <span>Send Enquiry</span>
+
+                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
 {/* Footer */}
-<footer className="relative overflow-hidden bg-[#171717] px-6 py-16 text-[#f1ede7] sm:px-10 md:px-16 md:py-20">
+<footer
+
+ className="relative overflow-hidden bg-[#171717] px-6 py-16 text-[#f1ede7] sm:px-10 md:px-16 md:py-20">
   <div className="mx-auto max-w-7xl">
 
     <div className="flex flex-col items-center text-center">
