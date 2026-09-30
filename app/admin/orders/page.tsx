@@ -3,6 +3,17 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import AdminNavButton from "../components/AdminNavButton";
 import OrderActions from "./OrderActions";
+import OrderExportControls from "./OrderExportControls";
+
+type OrderItem = {
+  id: string;
+  product_name: string | null;
+  product_image: string | null;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  unit_price: number | null;
+};
 
 type Order = {
   id: string;
@@ -18,8 +29,8 @@ type Order = {
   customer_state: string | null;
   customer_pincode: string | null;
   created_at: string;
+  order_items: OrderItem[];
 };
-
 function formatPrice(value: number | null) {
   if (value === null || value === undefined) return "—";
 
@@ -84,11 +95,34 @@ export default async function AdminOrdersPage() {
   }
 
   const { data: orders, error: ordersError } = await supabase
-    .from("orders")
-    .select(
-      "id, order_number, status, payment_method, payment_status, total, customer_name, customer_phone, customer_address, customer_city, customer_state, customer_pincode, created_at"
-    )
-    .order("created_at", { ascending: false });
+  .from("orders")
+  .select(
+    `
+      id,
+      order_number,
+      status,
+      payment_method,
+      payment_status,
+      total,
+      customer_name,
+      customer_phone,
+      customer_address,
+      customer_city,
+      customer_state,
+      customer_pincode,
+      created_at,
+      order_items (
+        id,
+        product_name,
+        product_image,
+        size,
+        color,
+        quantity,
+        unit_price
+      )
+    `
+  )
+  .order("created_at", { ascending: false });
 
   if (ordersError) {
     return (
@@ -178,12 +212,12 @@ export default async function AdminOrdersPage() {
           <OrderStat
             label="Processing"
             value={
-              orderList.filter(
-                (order) =>
-                  order.status === "Processing" ||
-                  order.status === "Order placed"
-              ).length
-            }
+  orderList.filter(
+    (order) =>
+      order.status === "processing" ||
+      order.status === "pending"
+  ).length
+}
             caption="Needs fulfillment"
             accent="pink"
           />
@@ -191,23 +225,25 @@ export default async function AdminOrdersPage() {
           <OrderStat
             label="Delivered"
             value={
-              orderList.filter((order) => order.status === "Delivered")
-                .length
-            }
+  orderList.filter((order) => order.status === "delivered")
+    .length
+}
             caption="Completed orders"
             accent="green"
           />
         </section>
+       <OrderExportControls orders={orderList} />
 
         {/* Orders */}
         <section className="mt-8">
+
           <div className="mb-4 flex items-end justify-between">
             <div>
               <p className="text-[8px] uppercase tracking-[0.28em] text-[#171717]/35">
                 Order list
               </p>
 
-              <h2 className="mt-2 text-2xl font-light tracking-[-0.04em]">
+              <h2 className="mt-2 text-3xl font-light tracking-[-0.04em]">
                 Customer orders
               </h2>
             </div>
@@ -220,7 +256,7 @@ export default async function AdminOrdersPage() {
 
           <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white/75 shadow-[0_18px_50px_rgba(40,35,30,0.04)] backdrop-blur-xl">
             {orderList.length > 0 ? (
-              <div className="divide-y divide-black/[0.05]">
+             <div className="divide-y-[4px] divide-black/[0.70]">
                 {orderList.map((order) => (
                   <div
                     key={order.id}
@@ -314,8 +350,73 @@ export default async function AdminOrdersPage() {
                         </div>
                       </div>
 
+                                           {/* Order items */}
+                      <div className="border-t border-black/[0.06] pt-5">
+                        <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-black/40">
+                          Order Items
+                        </p>
+
+                        <div className="mt-4 space-y-3">
+                          {order.order_items?.length ? (
+                            order.order_items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-4 rounded-2xl bg-[#F8F5F1] p-3"
+                              >
+                                {item.product_image ? (
+                                  <img
+                                    src={item.product_image}
+                                    alt={item.product_name ?? "Product"}
+                                    className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-black/[0.04] text-[9px] uppercase tracking-wider text-black/30">
+                                    No image
+                                  </div>
+                                )}
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-[#171717]">
+                                    {item.product_name ?? "Product"}
+                                  </p>
+
+                                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.12em] text-black/40">
+                                    {item.size && (
+                                      <span>Size: {item.size}</span>
+                                    )}
+
+                                    {item.color && (
+                                      <span>Colour: {item.color}</span>
+                                    )}
+
+                                    <span>Qty: {item.quantity}</span>
+                                  </div>
+                                </div>
+
+                                <div className="shrink-0 text-right">
+                                  <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
+                                    Price
+                                  </p>
+
+                                  <p className="mt-1 text-sm font-medium text-[#171717]">
+                                    {formatPrice(
+                                      (item.unit_price ?? 0) *
+                                        item.quantity
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-black/40">
+                              No item details available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Order actions */}
-                      <OrderActions
+                                            <OrderActions
                         orderId={order.id}
                         currentStatus={order.status}
                       />
@@ -349,7 +450,7 @@ export default async function AdminOrdersPage() {
             <AdminNavButton
               href="/admin"
               loadingText="Opening..."
-              className="text-left text-black/80 transition hover:text-[#171717]/55"
+              className="text-left text-black/90 text-xs transition hover:text-[#171717]/55"
             >
               Back to dashboard →
             </AdminNavButton>

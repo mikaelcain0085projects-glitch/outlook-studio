@@ -422,11 +422,15 @@ useEffect(() => {
   </a>
 
   <a
-    href="#enquiry"
-    className="text-black/50 transition-opacity duration-300 hover:opacity-60"
-  >
-    Make an Enquiry
-  </a>
+  href="#enquiry"
+  aria-label="Make an enquiry"
+  className="group flex h-9 w-9 items-center justify-center text-black/80"
+>
+  <span className="flex items-end font-serif font-light leading-none transition-transform duration-300 hover:opacity-60 group-hover:scale-130">
+    <span className="text-lg">?</span>
+    <span className="-ml-1 text-2xl">?</span>
+  </span>
+</a>
 </div>
   {/* Desktop actions */}
   <div className="hidden items-center gap-2 md:flex">
@@ -731,13 +735,21 @@ useEffect(() => {
 
     {/* Heading */}
     <div className="mb-10">
-      <p className="mb-4 text-xl uppercase tracking-[0.35em] text-black/40">
-  Collection
-</p>
+  <a
+    href="/"
+    className="text-sm font-xl tracking-[0.28em] text-[#171717] transition-all duration-500 hover:tracking-[0.4em]"
+  >
+    OUTLOOK <span className="text-[#171717]/55">STUDIO</span>
+  </a>
 
-<h2 className="text-5xl font-light tracking-tight text-[#24211e] sm:text-5xl md:text-7xl">
-  Products
-</h2>
+  <p className="mb-4 text-xl uppercase tracking-[0.35em] text-black/40">
+    Collection
+  </p>
+
+  <h2 className="text-5xl font-light tracking-tight text-[#24211e] sm:text-5xl md:text-7xl">
+    Products
+  </h2>
+
 
 <p className="mt-5 max-w-lg text-sm leading-6 text-[#4a4641] md:text-base">
   Explore the latest pieces from OUTLOOK STUDIO.
@@ -1123,7 +1135,7 @@ useEffect(() => {
           WHEREVER IT GOES.
         </h2>
 
-        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/55 drop-shadow-[0_2px_10px_rgba(0,0,0,0.18)] sm:text-base">
+        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/90 drop-shadow-[0_2px_10px_rgba(0,0,0,0.18)] sm:text-base">
           Sign in with Google to view your orders and follow every update from
           confirmation to delivery.
         </p>
@@ -1164,19 +1176,24 @@ useEffect(() => {
   id="enquiry"
   className="relative min-h-screen overflow-hidden bg-[#f1ede7]"
 >
+  
   {/* Background image */}
   <img
     src="/media/enquiry/enquiry.png"
     alt="OUTLOOK STUDIO customer enquiry"
     className="absolute inset-0 h-full w-full object-cover object-center"
   />
+  
 
   {/* Soft editorial overlay */}
   <div className="absolute inset-0 bg-[#f1ede7]/[0.10]" />
+  
+  
 
   <div className="relative z-10 flex min-h-screen items-center px-6 py-24 sm:px-10 md:px-16 lg:px-24">
     <div className="mx-auto w-full max-w-6xl">
       <div className="max-w-xl">
+        
         <p className="mb-5 text-[10px] uppercase tracking-[0.38em] text-[#171717]/50">
           Customer Enquiry
         </p>
@@ -1187,7 +1204,7 @@ useEffect(() => {
           TO HELP.
         </h2>
 
-        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/55 sm:text-base">
+        <p className="mt-7 max-w-md text-sm leading-6 text-[#171717]/90 sm:text-base">
           Have a question about a piece, your order, sizing, or anything
           else? Leave us a message and our team will get back to you.
         </p>
@@ -1369,21 +1386,20 @@ useEffect(() => {
       </p>
 
       <div className="mt-9 flex items-center gap-6 text-[9px] uppercase tracking-[0.22em] text-[#f1ede7]/45">
-        <a
-          href="#"
-          className="transition-colors duration-300 hover:text-[#f1ede7]"
-        >
-          Privacy Policy
-        </a>
-
+       <a
+  href="/privacy"
+  className="transition-colors duration-300 hover:text-[#f1ede7]"
+>
+  Privacy Policy
+</a>
         <span className="h-3 w-px bg-[#f1ede7]/15" />
 
         <a
-          href="#"
-          className="transition-colors duration-300 hover:text-[#f1ede7]"
-        >
-          Terms of Agreement
-        </a>
+  href="/terms"
+  className="transition-colors duration-300 hover:text-[#f1ede7]"
+>
+  Terms of Agreement
+</a>
       </div>
 
     </div>

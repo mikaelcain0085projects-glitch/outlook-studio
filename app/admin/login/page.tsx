@@ -147,7 +147,7 @@ export default function AdminLoginPage() {
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="mx-auto mt-7 block text-[9px] uppercase tracking-[0.2em] text-[#171717]/40 transition-colors hover:text-[#171717]"
+            className="mx-auto mt-7 block text-[12px] uppercase tracking-[0.2em] text-[#171717]/50 transition-colors hover:text-[#171717]"
           >
             ← Return to store
           </button>

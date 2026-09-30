@@ -154,7 +154,7 @@ export default async function AdminPage() {
       <header className="sticky top-0 z-30 border-b border-black/[0.06] bg-[#F1EDE7]/90 backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
           <Link href="/admin" className="group">
-            <div className="text-[15px] font-normal tracking-[0.26em] transition-all duration-500 group-hover:tracking-[0.34em]">
+            <div className="text-[17px] font-normal tracking-[0.26em] transition-all duration-500 group-hover:tracking-[0.34em]">
               OUTLOOK{" "}
               <span className="text-[#171717]/45">STUDIO</span>
             </div>
