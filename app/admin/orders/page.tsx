@@ -73,9 +73,17 @@ function getStatusStyle(status: string | null) {
   }
 }
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const supabase = await createClient();
 
+  const { page } = await searchParams;
+
+  const currentPage = Math.max(1, Number(page) || 1);
+  const ordersPerPage = 12;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -94,7 +102,14 @@ export default async function AdminOrdersPage() {
     redirect("/");
   }
 
-  const { data: orders, error: ordersError } = await supabase
+  const from = (currentPage - 1) * ordersPerPage;
+const to = from + ordersPerPage - 1;
+
+const {
+  data: orders,
+  error: ordersError,
+  count: totalOrders,
+} = await supabase
   .from("orders")
   .select(
     `
@@ -120,9 +135,11 @@ export default async function AdminOrdersPage() {
         quantity,
         unit_price
       )
-    `
+    `,
+    { count: "exact" }
   )
-  .order("created_at", { ascending: false });
+  .order("created_at", { ascending: false })
+  .range(from, to);
 
   if (ordersError) {
     return (
@@ -152,6 +169,13 @@ export default async function AdminOrdersPage() {
   }
 
   const orderList = (orders ?? []) as Order[];
+  const totalOrderCount = totalOrders ?? 0;
+const totalPages = Math.max(
+  1,
+  Math.ceil(totalOrderCount / ordersPerPage)
+);
+const hasPreviousPage = currentPage > 1;
+const hasNextPage = currentPage < totalPages;
 
   return (
     <main className="min-h-screen bg-[#F1EDE7] text-[#171717]">
@@ -439,8 +463,56 @@ export default async function AdminOrdersPage() {
                 </p>
               </div>
             )}
-          </div>
+                    </div>
+
+          {totalPages > 1 && (
+            <div className="mt-5 flex items-center justify-between rounded-[22px] border border-black/[0.06] bg-white/60 px-4 py-3 backdrop-blur-xl sm:px-5">
+              <Link
+                href={
+                  hasPreviousPage
+                    ? `/admin/orders?page=${currentPage - 1}`
+                    : "#"
+                }
+                aria-disabled={!hasPreviousPage}
+                className={`inline-flex h-9 items-center rounded-full px-4 text-[9px] font-medium uppercase tracking-[0.16em] transition ${
+                  hasPreviousPage
+                    ? "border border-black/[0.08] bg-white text-[#171717]/70 hover:border-black/[0.14] hover:bg-[#F8F5F1]"
+                    : "pointer-events-none border border-black/[0.04] bg-black/[0.02] text-[#171717]/20"
+                }`}
+              >
+                ← Previous
+              </Link>
+
+              <div className="text-center">
+                <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-[#171717]/55">
+                  Page {currentPage} of {totalPages}
+                </p>
+
+                <p className="mt-1 text-[8px] uppercase tracking-[0.14em] text-[#171717]/25">
+                  {totalOrderCount} orders
+                </p>
+              </div>
+
+              <Link
+                href={
+                  hasNextPage
+                    ? `/admin/orders?page=${currentPage + 1}`
+                    : "#"
+                }
+                aria-disabled={!hasNextPage}
+                className={`inline-flex h-9 items-center rounded-full px-4 text-[9px] font-medium uppercase tracking-[0.16em] transition ${
+                  hasNextPage
+                    ? "border border-black/[0.08] bg-white text-[#171717]/70 hover:border-black/[0.14] hover:bg-[#F8F5F1]"
+                    : "pointer-events-none border border-black/[0.04] bg-black/[0.02] text-[#171717]/20"
+                }`}
+              >
+                Next →
+              </Link>
+            </div>
+          )}
         </section>
+
+      
 
         {/* Footer */}
         <footer className="mt-14 border-t border-black/[0.06] pt-6">
