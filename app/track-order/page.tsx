@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 
+type OrderItem = {
+  id: string;
+  product_name: string | null;
+  product_image: string | null;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  unit_price: number | null;
+};
+
 type Order = {
   id: string;
   order_number: string;
@@ -12,6 +22,7 @@ type Order = {
   subtotal: number;
   total: number;
   created_at: string;
+  order_items: OrderItem[];
 };
 
 const statusSteps = [
@@ -127,11 +138,28 @@ export default function TrackOrderPage() {
       setError("");
 
       const { data, error: ordersError } = await supabase
-        .from("orders")
-        .select(
-          "id, order_number, status, payment_status, subtotal, total, created_at",
-        )
-        .order("created_at", { ascending: false });
+  .from("orders")
+  .select(
+    `
+      id,
+      order_number,
+      status,
+      payment_status,
+      subtotal,
+      total,
+      created_at,
+      order_items (
+        id,
+        product_name,
+        product_image,
+        size,
+        color,
+        quantity,
+        unit_price
+      )
+    `,
+  )
+  .order("created_at", { ascending: false });
 
       if (ordersError) {
         setError("We couldn't load your orders. Please try again.");
@@ -350,20 +378,54 @@ const currentStatusIndex = selectedOrder
                                 : "border-white/25 bg-white/15 hover:border-white/45 hover:bg-white/25"
                             }`}
                           >
-                            <div className="flex items-center justify-between gap-4">
-                              <div>
-                                <p className="text-[9px] uppercase tracking-[0.22em] text-[#171717]/45">
-                                  Order
-                                </p>
-                                <p className="mt-1 text-sm text-[#171717]/85">
-                                  {order.order_number}
-                                </p>
-                              </div>
+                           
+<div className="flex items-start justify-between gap-3">
+  <div className="flex min-w-0 items-start gap-3">
+    {order.order_items?.[0]?.product_image ? (
+      <img
+        src={order.order_items[0].product_image}
+        alt={order.order_items[0].product_name || "Ordered product"}
+        className="h-16 w-14 shrink-0 rounded-xl border border-white/40 object-cover"
+      />
+    ) : (
+      <div className="flex h-16 w-14 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white/25 text-[9px] uppercase tracking-wider text-[#171717]/40">
+        Item
+      </div>
+    )}
 
-                              <span className="rounded-full border border-white/30 bg-white/25 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em] text-[#171717]/70">
-                                {formatStatus(order.status)}
-                              </span>
-                            </div>
+    <div className="min-w-0">
+      <p className="text-[9px] uppercase tracking-[0.22em] text-[#171717]/45">
+        Order
+      </p>
+      <p className="mt-1 break-all text-sm text-[#171717]/85">
+        {order.order_number}
+      </p>
+
+      {order.order_items?.length > 0 && (
+        <>
+          <p className="mt-2 line-clamp-2 text-xs text-[#171717]/75">
+            {order.order_items[0].product_name || "Product"}
+            {order.order_items.length > 1
+              ? ` + ${order.order_items.length - 1} more item(s)`
+              : ""}
+          </p>
+          <p className="mt-1 text-[10px] text-[#171717]/50">
+            {order.order_items.length} item(s) · Qty{" "}
+            {order.order_items.reduce(
+              (total, item) => total + Number(item.quantity || 0),
+              0,
+            )}
+          </p>
+        </>
+      )}
+    </div>
+  </div>
+
+  <span className="shrink-0 rounded-full border border-white/30 bg-white/25 px-3 py-1.5 text-[9px] uppercase tracking-[0.15em] text-[#171717]/70">
+    {formatStatus(order.status)}
+  </span>
+</div>
+
                           </button>
                         );
                       })}
@@ -385,6 +447,59 @@ const currentStatusIndex = selectedOrder
                             ₹{Number(selectedOrder.total).toLocaleString("en-IN")}
                           </p>
                         </div>
+                        
+{selectedOrder.order_items?.length > 0 && (
+  <div className="mt-6 border-t border-[#171717]/10 pt-5">
+    <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-[#171717]/50">
+      Items in this order
+    </p>
+
+    <div className="space-y-4">
+      {selectedOrder.order_items.map((item) => (
+        <div
+          key={item.id}
+          className="flex items-start gap-4 rounded-2xl border border-white/35 bg-white/20 p-3"
+        >
+          {item.product_image ? (
+            <img
+              src={item.product_image}
+              alt={item.product_name || "Ordered product"}
+              className="h-24 w-20 shrink-0 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="flex h-24 w-20 shrink-0 items-center justify-center rounded-xl bg-white/30 text-[9px] uppercase tracking-wider text-[#171717]/40">
+              No image
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-[#171717]">
+              {item.product_name || "Product"}
+            </p>
+
+            <div className="mt-2 space-y-1 text-xs text-[#171717]/55">
+              {item.size && <p>Size: {item.size}</p>}
+              {item.color && <p>Colour: {item.color}</p>}
+              <p>Quantity: {item.quantity}</p>
+              <p>
+                Unit price: ₹
+                {Number(item.unit_price ?? 0).toLocaleString("en-IN")}
+              </p>
+            </div>
+
+            <p className="mt-3 text-sm text-[#171717]/80">
+              Item total: ₹
+              {(
+                Number(item.unit_price ?? 0) * Number(item.quantity || 0)
+              ).toLocaleString("en-IN")}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 
                         <div className="mt-7">
   {isCancelled ? (
