@@ -1,7 +1,9 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 const ORDER_STATUSES = [
   "pending",
@@ -73,7 +75,11 @@ export async function deleteOrder(orderId: string) {
     throw new Error("Order ID is required");
   }
 
-  const supabase = await verifyAdmin();
+  // Verify the current user's session and admin privileges first.
+  await verifyAdmin();
+
+  // Use the service-role client only for this protected server action.
+  const supabase = createAdminClient();
 
   const { error: itemsError } = await supabase
     .from("order_items")

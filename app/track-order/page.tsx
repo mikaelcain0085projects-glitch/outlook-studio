@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+import { cancelCustomerOrder } from "./actions";
 
 type OrderItem = {
   id: string;
@@ -18,6 +19,7 @@ type Order = {
   id: string;
   order_number: string;
   status: string;
+  cancellation_reason: string | null;
   payment_status: string;
   subtotal: number;
   total: number;
@@ -80,7 +82,11 @@ export default function TrackOrderPage() {
   const [loading, setLoading] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [error, setError] = useState("");
+const [error, setError] = useState("");
+const [cancellingOrder, setCancellingOrder] = useState(false);
+const [cancelMessage, setCancelMessage] = useState("");
+const [cancelMessageSuccess, setCancelMessageSuccess] = useState(false);
+const [cancellationReason, setCancellationReason] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -137,13 +143,15 @@ export default function TrackOrderPage() {
       setOrdersLoading(true);
       setError("");
 
-      const { data, error: ordersError } = await supabase
+
+const { data, error: ordersError } = await supabase
   .from("orders")
   .select(
     `
       id,
       order_number,
       status,
+      cancellation_reason,
       payment_status,
       subtotal,
       total,
@@ -159,7 +167,9 @@ export default function TrackOrderPage() {
       )
     `,
   )
+  .eq("user_id", user.id)
   .order("created_at", { ascending: false });
+
 
       if (ordersError) {
         setError("We couldn't load your orders. Please try again.");
@@ -167,15 +177,86 @@ export default function TrackOrderPage() {
         return;
       }
 
-      const customerOrders = (data ?? []) as Order[];
+     const customerOrders = (data ?? []) as Order[];
 
-      setOrders(customerOrders);
-      setSelectedOrder((current) => current ?? customerOrders[0] ?? null);
-      setOrdersLoading(false);
+setOrders(customerOrders);
+
+setSelectedOrder((current) => {
+  if (!current) {
+    return customerOrders[0] ?? null;
+  }
+
+  // Use the latest database version of the selected order.
+  return (
+    customerOrders.find((order) => order.id === current.id) ??
+    customerOrders[0] ??
+    null
+  );
+});
+
+setOrdersLoading(false);
     };
 
     loadOrders();
   }, [user, supabase]);
+
+const handleCancelOrder = async () => {
+  if (!selectedOrder || cancellingOrder) return;
+
+  const reason = cancellationReason.trim();
+
+  if (!reason) {
+    setCancelMessage("Please provide a reason for cancelling your order.");
+    setCancelMessageSuccess(false);
+    return;
+  }
+
+  if (reason.length > 1000) {
+    setCancelMessage("Your cancellation reason must be 1000 characters or fewer.");
+    setCancelMessageSuccess(false);
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to cancel order ${selectedOrder.order_number}?`,
+  );
+
+  if (!confirmed) return;
+
+  setCancellingOrder(true);
+  setCancelMessage("");
+  setError("");
+
+  try {
+    const result = await cancelCustomerOrder(selectedOrder.id, reason);
+
+    setCancelMessage(result.message);
+    setCancelMessageSuccess(result.success);
+
+    if (result.success) {
+      const cancelledOrder = {
+        ...selectedOrder,
+        status: "cancelled",
+        cancellation_reason: reason,
+      };
+
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === cancelledOrder.id ? cancelledOrder : order,
+        ),
+      );
+
+      setSelectedOrder(cancelledOrder);
+      setCancellationReason("");
+    }
+  } catch {
+    setCancelMessage("Unable to cancel your order. Please try again.");
+    setCancelMessageSuccess(false);
+  } finally {
+    setCancellingOrder(false);
+  }
+};
+
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -194,7 +275,17 @@ export default function TrackOrderPage() {
     }
   };
 
-  const isCancelled = selectedOrder?.status.toLowerCase() === "cancelled";
+ const isCancelled = selectedOrder?.status.toLowerCase() === "cancelled";
+
+useEffect(() => {
+  setCancelMessage("");
+  setCancelMessageSuccess(false);
+  setCancellationReason("");
+}, [selectedOrder?.id]);
+
+const canCancelOrder = ["pending", "confirmed", "processing"].includes(
+  selectedOrder?.status?.trim().toLowerCase() ?? "",
+);
 
 const currentStatusIndex = selectedOrder
   ? getStatusIndex(selectedOrder.status)
@@ -378,7 +469,7 @@ const currentStatusIndex = selectedOrder
                                 : "border-white/25 bg-white/15 hover:border-white/45 hover:bg-white/25"
                             }`}
                           >
-                           
+
 <div className="flex items-start justify-between gap-3">
   <div className="flex min-w-0 items-start gap-3">
     {order.order_items?.[0]?.product_image ? (
@@ -447,7 +538,7 @@ const currentStatusIndex = selectedOrder
                             ₹{Number(selectedOrder.total).toLocaleString("en-IN")}
                           </p>
                         </div>
-                        
+
 {selectedOrder.order_items?.length > 0 && (
   <div className="mt-6 border-t border-[#171717]/10 pt-5">
     <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-[#171717]/50">
@@ -555,8 +646,93 @@ const currentStatusIndex = selectedOrder
                             );
                          })
                         )}
-                          
+
                         </div>
+
+{/* Customer cancellation controls */}
+<div className="mt-6 border-t border-[#171717]/10 pt-5">
+  {cancelMessage && (
+    <div
+      role="status"
+      className={`mb-4 rounded-2xl border px-4 py-3 text-xs leading-5 ${
+        cancelMessageSuccess
+          ? "border-green-700/15 bg-green-100/50 text-green-900"
+          : "border-[#9A5963]/20 bg-[#F7E5E7]/55 text-[#7B4B53]"
+      }`}
+    >
+      {cancelMessage}
+    </div>
+  )}
+
+
+{canCancelOrder && (
+  <>
+    <div className="mb-4">
+      <label
+        htmlFor="cancellation-reason"
+        className="mb-2 block text-xs font-medium tracking-wide text-[#171717]/80"
+      >
+        Reason for cancellation <span className="text-[#9A5963]">*</span>
+      </label>
+
+      <textarea
+        id="cancellation-reason"
+        value={cancellationReason}
+        onChange={(event) => setCancellationReason(event.target.value)}
+        maxLength={1000}
+        rows={3}
+        placeholder="Please tell us why you want to cancel this order..."
+        disabled={cancellingOrder}
+        className="w-full resize-y rounded-2xl border border-[#171717]/15 bg-white/45 px-4 py-3 text-sm text-[#171717] outline-none transition placeholder:text-[#171717]/40 focus:border-[#9A5963]/50 focus:ring-2 focus:ring-[#9A5963]/10 disabled:opacity-60"
+      />
+
+      <div className="mt-1 flex items-center justify-between gap-3">
+        <p className="text-[11px] text-[#171717]/50">
+          Please provide a reason before cancelling.
+        </p>
+        <span className="shrink-0 text-[11px] tabular-nums text-[#171717]/45">
+          {cancellationReason.length}/1000
+        </span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      onClick={handleCancelOrder}
+      disabled={cancellingOrder}
+      className="inline-flex min-h-11 items-center justify-center gap-3 rounded-full border border-[#9A5963]/25 bg-[#F7E5E7]/55 px-5 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-[#7B4B53] transition hover:bg-[#F3D9DD] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {cancellingOrder && (
+        <span
+          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#7B4B53]/25 border-t-[#7B4B53]"
+          aria-hidden="true"
+        />
+      )}
+      {cancellingOrder ? "Cancelling order..." : "Cancel order"}
+    </button>
+  </>
+)}
+
+
+
+  {selectedOrder.status.toLowerCase() === "shipped" && (
+    <div className="rounded-2xl border border-[#171717]/10 bg-white/25 px-4 py-3">
+      <p className="text-xs font-medium text-[#171717]/80">
+        Your order has been shipped
+      </p>
+      <p className="mt-1 text-xs leading-5 text-[#171717]/55">
+        This order has been shipped and can no longer be cancelled.
+      </p>
+    </div>
+  )}
+
+  {selectedOrder.status.toLowerCase() === "delivered" && (
+    <p className="text-xs leading-5 text-[#171717]/55">
+      This order has been delivered and can no longer be cancelled.
+    </p>
+  )}
+</div>
+
 
                         <div className="mt-2 flex items-center justify-between border-t border-[#171717]/10 pt-4 text-[10px] uppercase tracking-[0.15em] text-[#171717]/45">
                           <span>
