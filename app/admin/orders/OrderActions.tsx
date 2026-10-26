@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { deleteOrder, updateOrderStatus } from "./actions";
 
 const ORDER_STATUSES = [
@@ -15,16 +16,21 @@ const ORDER_STATUSES = [
 type OrderActionsProps = {
   orderId: string;
   currentStatus: string | null;
+  currentPage: number;
+  isLastOrderOnPage: boolean;
 };
 
 export default function OrderActions({
   orderId,
   currentStatus,
+  currentPage,
+  isLastOrderOnPage,
 }: OrderActionsProps) {
+  const router = useRouter();
+
   const [status, setStatus] = useState(
     currentStatus || "pending"
   );
-
   const [isPending, startTransition] = useTransition();
   const [pendingAction, setPendingAction] = useState<
     "status" | "delete" | null
@@ -80,7 +86,16 @@ export default function OrderActions({
 
     startTransition(async () => {
       try {
+
         await deleteOrder(orderId);
+
+        if (isLastOrderOnPage && currentPage > 1) {
+          router.replace(
+            currentPage === 2
+              ? "/admin/orders"
+              : `/admin/orders?page=${currentPage - 1}`,
+          );
+        }
       } catch (error) {
         setErrorMessage(
           error instanceof Error

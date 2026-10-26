@@ -18,7 +18,8 @@ type OrderItem = {
 type Order = {
   id: string;
   order_number: string;
-  status: string | null;
+    status: string | null;
+  cancellation_reason: string | null;
   payment_method: string | null;
   payment_status: string | null;
   total: number | null;
@@ -115,7 +116,8 @@ const {
     `
       id,
       order_number,
-      status,
+            status,
+      cancellation_reason,
       payment_method,
       payment_status,
       total,
@@ -304,6 +306,32 @@ const hasNextPage = currentPage < totalPages;
                             </span>
                           </div>
 
+{order.status?.trim().toLowerCase() === "cancelled" && (
+  <div className="mt-4 rounded-2xl border border-[#D9A5AA] bg-[#F9E8E9] p-4">
+    <div className="flex items-start gap-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EBCBD0] text-[#8A3542]">
+        !
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8A3542]">
+          Order cancelled
+        </p>
+
+        <p className="mt-2 text-[8px] uppercase tracking-[0.16em] text-[#8A3542]/70">
+          Cancellation reason
+        </p>
+
+        <p className="mt-1 break-words text-sm leading-6 text-[#542D32]">
+          {order.cancellation_reason?.trim() ||
+            "No cancellation reason was recorded for this order."}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+
+
                           <p className="mt-2 text-[9px] uppercase tracking-[0.12em] text-[#171717]/30">
                             {formatDate(order.created_at)}
                           </p>
@@ -440,10 +468,12 @@ const hasNextPage = currentPage < totalPages;
                       </div>
 
                       {/* Order actions */}
-                                            <OrderActions
-                        orderId={order.id}
-                        currentStatus={order.status}
-                      />
+<OrderActions
+  orderId={order.id}
+  currentStatus={order.status}
+  currentPage={currentPage}
+  isLastOrderOnPage={orderList.length === 1}
+/>
                     </div>
                   </div>
                 ))}
@@ -512,7 +542,7 @@ const hasNextPage = currentPage < totalPages;
           )}
         </section>
 
-      
+
 
         {/* Footer */}
         <footer className="mt-14 border-t border-black/[0.06] pt-6">
